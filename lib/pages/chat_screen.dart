@@ -122,9 +122,7 @@ class MessageBar extends StatelessWidget {
                   width: controller.screenwidth.value * 0.45,
                   child: TextField(
                     controller: textcontroller,
-                    onTap: () {
-                      // APIs.updateRead(chat);
-                    },
+                    onTap: () {},
                     decoration: const InputDecoration(
                       border: InputBorder.none,
                       hintText: 'Type something ..',
@@ -166,8 +164,7 @@ class BlueMessage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // final size = MediaQuery.of(context).size;
-    // FireStore.updateRead(chat.toId);
+    if (!chat.read) FireStore.updateRead(userid: chat.fromId, time: chat.time);
     return Column(
       children: [
         if (int.parse(DateTime.now()

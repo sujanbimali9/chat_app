@@ -90,8 +90,6 @@ class FireStore {
 
   //create conversation id for conversation
   static String getConversionId(String id) {
-    print(Auth.user.uid.hashCode <= id.hashCode);
-
     return Auth.user.uid.hashCode <= id.hashCode
         ? '${Auth.user.uid}_$id'
         : '${id}_${Auth.user.uid}';
@@ -122,13 +120,32 @@ class FireStore {
         .set(message.toJson());
   }
 
-  static Future<void> updateRead(String userid) async {
+  static Future<void> updateRead(
+      {required String userid, required String time}) async {
     firestore
-        .collection('chats/${getConversionId(userid)}/messages/')
-        .doc()
+        .collection('chat/${getConversionId(userid)}/messages/')
+        .doc(time)
         .update(
       {'read': true},
     );
+  }
+
+  // function that return stream of last messages
+  static Stream<QuerySnapshot<Map<String, dynamic>>> getLastMessage(
+      String userid) {
+    return firestore
+        .collection('chat/${getConversionId(userid)}/messages/')
+        .orderBy('time', descending: true)
+        .limit(1)
+        .snapshots();
+  }
+
+  // update online status
+  static Future<void> updateOnlineStatus() {
+    return firestore
+        .collection('users')
+        .doc(Auth.user.uid)
+        .update({'isOnline': true});
   }
 }
 

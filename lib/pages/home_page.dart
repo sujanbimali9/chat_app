@@ -21,8 +21,7 @@ class _HomePageState extends State<HomePage> {
   @override
   void initState() {
     super.initState();
-    // APIs.getUsers();
-    // APIs.getSelfInfo();
+    FireStore.updateOnlineStatus();
   }
 
   @override
