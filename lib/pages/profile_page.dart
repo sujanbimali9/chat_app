@@ -2,6 +2,7 @@ import 'dart:io';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:chat/api/apis.dart';
 import 'package:chat/controller/controller.dart';
+import 'package:chat/models/user.dart';
 import 'package:chat/pages/auth/loginscreen.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
@@ -10,12 +11,17 @@ import 'package:google_sign_in/google_sign_in.dart';
 import 'package:image_picker/image_picker.dart';
 
 class UserProfilePage extends StatelessWidget {
-  const UserProfilePage({super.key, required this.controller});
+  const UserProfilePage(
+      {super.key, required this.controller, required this.user});
+  final ChatUser user;
   final UserProfileController controller;
 
   @override
   Widget build(BuildContext context) {
     final formKey = GlobalKey<FormState>();
+
+    String about = '';
+    String name = '';
     void showBottomSheet(
         BuildContext context, UserProfileController controller) {
       final ImagePicker picker = ImagePicker();
@@ -45,9 +51,11 @@ class UserProfilePage extends StatelessWidget {
                     final XFile? photo =
                         await picker.pickImage(source: ImageSource.camera);
                     if (photo != null) {
-                      APIs.updateProfilePicture(File(photo.path));
+                      FireStore.updateProfilePicture(File(photo.path));
                     }
-                    Navigator.pop(context);
+                    Future.microtask(
+                      () => Navigator.pop(context),
+                    );
                   },
                   child: Padding(
                     padding: EdgeInsets.symmetric(
@@ -64,9 +72,11 @@ class UserProfilePage extends StatelessWidget {
                     final XFile? image =
                         await picker.pickImage(source: ImageSource.gallery);
                     if (image != null) {
-                      APIs.updateProfilePicture(File(image.path));
+                      FireStore.updateProfilePicture(File(image.path));
                     }
-                    Navigator.pop(context);
+                    Future.microtask(
+                      () => Navigator.pop(context),
+                    );
                   },
                   child: Padding(
                     padding: EdgeInsets.symmetric(
@@ -114,7 +124,7 @@ class UserProfilePage extends StatelessWidget {
                           borderRadius: BorderRadius.circular(
                               controller.screenheight.value * 0.1),
                           child: CachedNetworkImage(
-                            imageUrl: APIs.me.image,
+                            imageUrl: user.image,
                             height: controller.screenheight.value * 0.2,
                             width: controller.screenheight.value * 0.2,
                             fit: BoxFit.cover,
@@ -144,7 +154,7 @@ class UserProfilePage extends StatelessWidget {
                   height: 20,
                 ),
                 Text(
-                  APIs.me.email,
+                  user.email,
                   style: const TextStyle(fontSize: 15, color: Colors.black54),
                 ),
                 SizedBox(
@@ -154,13 +164,13 @@ class UserProfilePage extends StatelessWidget {
                   padding: EdgeInsets.symmetric(
                       horizontal: controller.screenheight.value * 0.05),
                   child: TextFormField(
-                    onSaved: (newValue) => APIs.me.name = newValue ?? '',
+                    onSaved: (newValue) => name = newValue ?? '',
                     validator: (value) {
                       return value != null && value.isNotEmpty
                           ? null
                           : 'Required Field';
                     },
-                    initialValue: APIs.me.name,
+                    initialValue: user.name,
                     decoration: const InputDecoration(
                       labelText: 'Name',
                       isDense: true,
@@ -177,8 +187,8 @@ class UserProfilePage extends StatelessWidget {
                   padding: EdgeInsets.symmetric(
                       horizontal: controller.screenheight.value * 0.05),
                   child: TextFormField(
-                    initialValue: APIs.me.about,
-                    onSaved: (newValue) => APIs.me.about = newValue ?? '',
+                    initialValue: user.about,
+                    onSaved: (newValue) => about = newValue ?? '',
                     validator: (value) {
                       return value != null && value.isNotEmpty
                           ? null
@@ -201,7 +211,7 @@ class UserProfilePage extends StatelessWidget {
                   onPressed: () {
                     if (formKey.currentState!.validate()) {
                       formKey.currentState!.save();
-                      APIs.updateUserInfo();
+                      FireStore.updateUserInfo(name, about);
                     }
                   },
                   icon: const Icon(Icons.edit),

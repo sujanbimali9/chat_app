@@ -1,11 +1,11 @@
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:chat/api/apis.dart';
 import 'package:chat/controller/controller.dart';
-import 'package:chat/helper/current_user.dart';
 import 'package:chat/models/user.dart';
 import 'package:chat/pages/profile_page.dart';
 import 'package:chat/pages/search_page.dart';
 import 'package:chat/widgets/chat_user_card.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
@@ -51,30 +51,47 @@ class _HomePageState extends State<HomePage> {
               borderRadius: BorderRadius.circular(
                 widget.controller.screenheight.value * 0.025,
               ),
-              child: InkWell(
-                borderRadius: BorderRadius.circular(
-                  widget.controller.screenheight.value * 0.025,
-                ),
-                onTap: () {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (context) => UserProfilePage(
-                        controller: widget.controller,
-                      ),
-                    ),
-                  );
-                },
-                child: CachedNetworkImage(
-                  imageUrl: CurrentUser.image,
-                  filterQuality: FilterQuality.high,
-                  fit: BoxFit.fill,
-                  height: widget.controller.screenheight.value * 0.05,
-                  width: widget.controller.screenheight.value * 0.05,
-                ),
-              ),
+              child: StreamBuilder<DocumentSnapshot<Map<String, dynamic>>>(
+                  stream: FireStore.getSelfUser(),
+                  builder: (context, snapshot) {
+                    if (snapshot.connectionState == ConnectionState.waiting) {
+                      return const CircularProgressIndicator();
+                    } else if (snapshot.hasError) {
+                      return Text('Error: ${snapshot.error}');
+                    } else if (!snapshot.hasData ||
+                        snapshot.data!.data() == null) {
+                      return const Text('No data available');
+                    } else {
+                      ChatUser loggeduser =
+                          ChatUser.fromJson(snapshot.data!.data()!);
+                      final imageUrl = loggeduser.image.toString();
+                      return InkWell(
+                        borderRadius: BorderRadius.circular(
+                          widget.controller.screenheight.value * 0.025,
+                        ),
+                        onTap: () {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (context) => UserProfilePage(
+                                controller: widget.controller,
+                                user: loggeduser,
+                              ),
+                            ),
+                          );
+                        },
+                        child: CachedNetworkImage(
+                          imageUrl: imageUrl,
+                          filterQuality: FilterQuality.high,
+                          fit: BoxFit.fill,
+                          height: widget.controller.screenheight.value * 0.05,
+                          width: widget.controller.screenheight.value * 0.05,
+                        ),
+                      );
+                    }
+                  }),
             ),
-          ),
+          )
         ],
       ),
       floatingActionButton: Padding(
@@ -89,8 +106,8 @@ class _HomePageState extends State<HomePage> {
           ),
         ),
       ),
-      body: StreamBuilder(
-        stream: APIs.getUsers(),
+      body: StreamBuilder<QuerySnapshot<Map<String, dynamic>>>(
+        stream: FireStore.getUsers(),
         builder: (context, snapshot) {
           switch (snapshot.connectionState) {
             case ConnectionState.waiting:

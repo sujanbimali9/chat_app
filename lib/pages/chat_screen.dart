@@ -51,23 +51,25 @@ class ChatScreen extends StatelessWidget {
         children: [
           Expanded(
             child: StreamBuilder(
-              stream: APIs.getMessages(user),
-              builder: (context, snapshot) {
-                switch (snapshot.connectionState) {
+              stream: FireStore.getMessage(user.id),
+              builder: (context, snapshots) {
+                switch (snapshots.connectionState) {
                   case ConnectionState.waiting:
                     return const Center(child: CircularProgressIndicator());
                   case ConnectionState.none:
                   case ConnectionState.active:
                   case ConnectionState.done:
-                    final data = snapshot.data?.docs;
+                    final data = snapshots.data?.docs;
+
                     List<Chats> list =
                         data?.map((e) => Chats.fromJson(e.data())).toList() ??
                             [];
                     if (list.isNotEmpty) {
                       return ListView.builder(
                         itemCount: list.length,
-                        itemBuilder: (context, index) =>
-                            MessageCard(chat: list[index]),
+                        itemBuilder: (context, index) {
+                          return MessageCard(chat: list[index]);
+                        },
                       );
                     } else {
                       return const Center(child: Text('Say Hi!!'));
@@ -143,7 +145,7 @@ class MessageBar extends StatelessWidget {
           IconButton(
             onPressed: () {
               if (textcontroller.text.isNotEmpty) {
-                APIs.sendMessage(user, textcontroller.text);
+                FireStore.sendMessage(toid: user.id, msg: textcontroller.text);
                 textcontroller.clear();
               }
             },
@@ -165,7 +167,7 @@ class BlueMessage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     // final size = MediaQuery.of(context).size;
-    APIs.updateRead(chat);
+    // FireStore.updateRead(chat.toId);
     return Column(
       children: [
         if (int.parse(DateTime.now()
@@ -243,7 +245,7 @@ class GreenMessage extends StatelessWidget {
                   chat.msg,
                 ),
               ),
-              if (chat.sent.isNotEmpty && chat.read.isNotEmpty)
+              if (chat.time.isNotEmpty && chat.read)
                 const Padding(
                   padding: EdgeInsets.only(right: 8.0),
                   child: Icon(
@@ -251,7 +253,7 @@ class GreenMessage extends StatelessWidget {
                     color: Colors.blue,
                   ),
                 )
-              else if (chat.sent.isNotEmpty)
+              else if (chat.time.isNotEmpty)
                 const Padding(
                   padding: EdgeInsets.only(right: 8.0),
                   child: Icon(
@@ -273,7 +275,7 @@ class MessageCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    bool isMe = APIs.user.uid == chat.fromId;
+    bool isMe = Auth.user.uid == chat.fromId;
 
     return InkWell(
       onLongPress: () {},

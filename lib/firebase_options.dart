@@ -63,8 +63,10 @@ class DefaultFirebaseOptions {
     messagingSenderId: '158642611374',
     projectId: 'chat-f8cfd',
     storageBucket: 'chat-f8cfd.appspot.com',
-    androidClientId: '158642611374-hknttc54fvc2p23kh6o2hsp5ii6timkq.apps.googleusercontent.com',
-    iosClientId: '158642611374-do72kgh29upr0l0c6lb5kihh5i1mru71.apps.googleusercontent.com',
+    androidClientId:
+        '158642611374-hknttc54fvc2p23kh6o2hsp5ii6timkq.apps.googleusercontent.com',
+    iosClientId:
+        '158642611374-do72kgh29upr0l0c6lb5kihh5i1mru71.apps.googleusercontent.com',
     iosBundleId: 'com.example.chat',
   );
 }

@@ -21,15 +21,19 @@ class _LoginPageState extends State<LoginPage> {
     _signInWithGoogle().then((user) async {
       Navigator.pop(context);
       if (user != null) {
-        if (await APIs.checkUser()) {
-          Navigator.pushReplacement(
+        if (await FireStore.checkUser()) {
+          Future.microtask(
+            () => Navigator.pushReplacement(
               context,
               MaterialPageRoute(
-                  builder: (_) => HomePage(
-                        controller: controller,
-                      )));
+                builder: (_) => HomePage(
+                  controller: controller,
+                ),
+              ),
+            ),
+          );
         } else {
-          await APIs.addUser().then(
+          await FireStore.addUser().then(
             (value) => Navigator.pushReplacement(
               context,
               MaterialPageRoute(
@@ -55,7 +59,7 @@ class _LoginPageState extends State<LoginPage> {
         accessToken: googleAuth?.accessToken,
         idToken: googleAuth?.idToken,
       );
-      return await APIs.auth.signInWithCredential(credential);
+      return await Auth.auth.signInWithCredential(credential);
     } catch (e) {
       Future.microtask(
         () => Dialogs.showSnackbar(context, 'No internet connection'),

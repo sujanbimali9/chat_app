@@ -53,7 +53,7 @@ class SearchPage extends StatelessWidget {
             return const SizedBox();
           } else {
             return StreamBuilder(
-                stream: APIs.getUsers(),
+                stream: FireStore.getUsers(),
                 builder: (context, snapshot) {
                   if (!snapshot.hasData) {
                     return const Center(

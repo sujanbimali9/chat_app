@@ -26,9 +26,9 @@ class _SplashScreenState extends State<SplashScreen> {
     });
 
     Future.delayed(const Duration(seconds: 2), () {
-      if (APIs.auth.currentUser != null) {
-        APIs.firestore;
-        APIs.getSelfInfo();
+      if (Auth.auth.currentUser != null) {
+        FireStore.firestore;
+        FireStore.getSelfUser();
         Navigator.pushReplacement(
           context,
           MaterialPageRoute(
