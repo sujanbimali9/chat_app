@@ -14,11 +14,11 @@ class ChatUserCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     String lastmessage = user.about;
-    // bool isRead = true;
     return Card(
       margin: const EdgeInsets.symmetric(horizontal: 20, vertical: 5),
       child: ListTile(
         onTap: () {
+          // controller.user = user.obs;
           Navigator.push(
               context,
               MaterialPageRoute(
@@ -37,13 +37,18 @@ class ChatUserCard extends StatelessWidget {
           builder: (context, snapshot) {
             final data = snapshot.data?.docs;
             if (data != null && data.isNotEmpty) {
-              lastmessage = data[0].data()['msg'];
+              if (data[0].data()['type'] == 'Type.image') {
+                lastmessage = 'photo';
+              } else {
+                lastmessage = data[0].data()['msg'];
+              }
             }
+
             return Text(lastmessage);
           },
         ),
         trailing: Text(
-          CurrentDateTime.getCurrentTime(
+          CurrentDateTime.getTime(
             context: context,
             time: user.lastActive,
           ),

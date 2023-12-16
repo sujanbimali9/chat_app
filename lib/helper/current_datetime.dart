@@ -8,8 +8,7 @@ class CurrentDateTime {
     return TimeOfDay.fromDateTime(date).format(context);
   }
 
-  static String getCurrentTime(
-      {required BuildContext context, required String time}) {
+  static String getTime({required BuildContext context, required String time}) {
     final DateTime sent = DateTime.fromMicrosecondsSinceEpoch(int.parse(time));
     final DateTime now = DateTime.now();
     if (now.day == sent.day &&
@@ -56,5 +55,30 @@ class CurrentDateTime {
       default:
         return 'NA';
     }
+  }
+
+  static String getDateTime(
+      {required BuildContext context, required String time}) {
+    final DateTime sent = DateTime.fromMicrosecondsSinceEpoch(int.parse(time));
+    final DateTime now = DateTime.now();
+    if (now.day == sent.day &&
+        now.month == sent.month &&
+        now.year == now.year) {
+      if (now.hour - sent.hour <= 1) {
+        return '${now.minute - sent.minute} min ago';
+      }
+      if (now.hour - sent.hour > 1 && now.hour - sent.hour <= 23) {
+        return '${now.hour - sent.hour} ago';
+      }
+    } else if (now.day != sent.day &&
+        now.month == sent.month &&
+        now.year == sent.year) {
+      return "${sent.day} ${getMonth(month: sent.month)}";
+    } else if (now.year != sent.year) {
+      return '${sent.month} ${sent.year}';
+    } else {
+      return 'NA';
+    }
+    return 'NA';
   }
 }

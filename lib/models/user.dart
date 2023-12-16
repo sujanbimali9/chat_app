@@ -26,7 +26,7 @@ class ChatUser {
     about = json['about'];
     createdAt = json['created_at'];
     lastActive = json['last_active'];
-    isOnline = json['is_online'];
+    isOnline = json['isOnline'];
     id = json['id'];
     pushToken = json['push_token'];
     email = json['email'];
@@ -39,7 +39,7 @@ class ChatUser {
     data['about'] = about;
     data['created_at'] = createdAt;
     data['last_active'] = lastActive;
-    data['is_online'] = isOnline;
+    data['isOnline'] = isOnline;
     data['id'] = id;
     data['push_token'] = pushToken;
     data['email'] = email;

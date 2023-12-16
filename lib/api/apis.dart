@@ -77,7 +77,7 @@ class FireStore {
     final ref = FireStorage.storage
         .ref()
         .child('profile_pictures/${Auth.user.uid}.$extension');
-    ref.putFile(
+    await ref.putFile(
       file,
       SettableMetadata(contentType: 'image/$extension'),
     );
@@ -99,17 +99,18 @@ class FireStore {
   static Stream<QuerySnapshot<Map<String, dynamic>>> getMessage(String userid) {
     return firestore
         .collection('chat/${getConversionId(userid)}/messages/')
+        .orderBy('time', descending: true)
         .snapshots();
   }
 
   static Future<void> sendMessage(
-      {required String msg, required String toid}) async {
+      {required String msg, required String toid, required Type type}) async {
     final String time = DateTime.now().microsecondsSinceEpoch.toString();
     final Chats message = Chats(
         msg: msg,
         toId: toid,
         read: false,
-        type: Type.text.toString(),
+        type: type.toString(),
         fromId: Auth.user.uid,
         time: time);
     await firestore
@@ -122,7 +123,7 @@ class FireStore {
 
   static Future<void> updateRead(
       {required String userid, required String time}) async {
-    firestore
+    await firestore
         .collection('chat/${getConversionId(userid)}/messages/')
         .doc(time)
         .update(
@@ -141,11 +142,38 @@ class FireStore {
   }
 
   // update online status
-  static Future<void> updateOnlineStatus() {
+  static Future<void> updateOnlineStatus(
+    bool isOnline,
+  ) {
+    return firestore.collection('users').doc(Auth.user.uid).update({
+      'isOnline': isOnline,
+      'last_active': DateTime.now().microsecondsSinceEpoch.toString()
+    });
+  }
+
+  static Future<void> sendImage(String userId, File file) async {
+    int time = DateTime.now().microsecondsSinceEpoch;
+    final extension = file.path.split('.').last;
+
+    final ref = FireStorage.storage.ref().child(
+        'images/${getConversionId(userId)}/${time.toString()}.$extension');
+    await ref.putFile(
+      file,
+      SettableMetadata(contentType: 'image/$extension'),
+    );
+    final imageURl = await ref.getDownloadURL();
+    sendMessage(
+      msg: imageURl,
+      toid: userId,
+      type: Type.image,
+    );
+  }
+
+  Stream<QuerySnapshot<Map<String, dynamic>>> getUserInfo(ChatUser user) {
     return firestore
         .collection('users')
-        .doc(Auth.user.uid)
-        .update({'isOnline': true});
+        .where('id', isEqualTo: user.id)
+        .snapshots();
   }
 }
 

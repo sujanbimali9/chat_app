@@ -7,6 +7,7 @@ import 'package:chat/pages/search_page.dart';
 import 'package:chat/widgets/chat_user_card.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:get/get.dart';
 
 class HomePage extends StatefulWidget {
@@ -21,7 +22,15 @@ class _HomePageState extends State<HomePage> {
   @override
   void initState() {
     super.initState();
-    FireStore.updateOnlineStatus();
+    SystemChannels.lifecycle.setMessageHandler((message) {
+      if (message.toString().contains('resume')) {
+        FireStore.updateOnlineStatus(true);
+      }
+      if (message.toString().contains('pause')) {
+        FireStore.updateOnlineStatus(false);
+      }
+      return Future.value(message);
+    });
   }
 
   @override
