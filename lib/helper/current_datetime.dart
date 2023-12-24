@@ -8,6 +8,22 @@ class CurrentDateTime {
     return TimeOfDay.fromDateTime(date).format(context);
   }
 
+  static String fullDateTime(
+      {required BuildContext context, required String time}) {
+    final sent = DateTime.fromMicrosecondsSinceEpoch(int.parse(time));
+    final DateTime now = DateTime.now();
+    if (now.day == sent.day &&
+        now.month == sent.month &&
+        now.year == now.year) {
+      return TimeOfDay.fromDateTime(sent).format(context);
+    }
+    return now.day != sent.day &&
+            now.month == sent.month &&
+            now.year == sent.year
+        ? "${getMonth(month: sent.month)} ${sent.day} ${sent.hour} ${sent.minute}"
+        : "${sent.year} ${getMonth(month: sent.month)} ${sent.day} ${sent.hour} ${sent.minute}";
+  }
+
   static String getTime({required BuildContext context, required String time}) {
     final DateTime sent = DateTime.fromMicrosecondsSinceEpoch(int.parse(time));
     final DateTime now = DateTime.now();
@@ -68,7 +84,7 @@ class CurrentDateTime {
         return '${now.minute - sent.minute} min ago';
       }
       if (now.hour - sent.hour > 1 && now.hour - sent.hour <= 23) {
-        return '${now.hour - sent.hour} ago';
+        return '${now.hour - sent.hour} hour ago';
       }
     } else if (now.day != sent.day &&
         now.month == sent.month &&

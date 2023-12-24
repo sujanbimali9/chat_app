@@ -1,8 +1,10 @@
+import 'dart:developer';
 import 'package:chat/api/apis.dart';
 import 'package:chat/controller/controller.dart';
 import 'package:chat/helper/dialog.dart';
 import 'package:chat/pages/home_page.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:google_sign_in/google_sign_in.dart';
@@ -19,6 +21,11 @@ class _LoginPageState extends State<LoginPage> {
   _googleLoginClick(UserProfileController controller) {
     Dialogs.showProgressBar(context);
     _signInWithGoogle().then((user) async {
+      if (user != null)
+        log(user.credential.toString());
+      else {
+        log('sujan.toString()');
+      }
       Navigator.pop(context);
       if (user != null) {
         if (await FireStore.checkUser()) {
@@ -49,23 +56,47 @@ class _LoginPageState extends State<LoginPage> {
   }
 
   Future<UserCredential?> _signInWithGoogle() async {
-    try {
-      final GoogleSignInAccount? googleUser = await GoogleSignIn().signIn();
+    if (kIsWeb) {
+      try {
+        final GoogleSignInAccount? googleUser =
+            await GoogleSignIn().signInSilently();
 
-      final GoogleSignInAuthentication? googleAuth =
-          await googleUser?.authentication;
+        final GoogleSignInAuthentication? googleAuth =
+            await googleUser?.authentication;
 
-      final credential = GoogleAuthProvider.credential(
-        accessToken: googleAuth?.accessToken,
-        idToken: googleAuth?.idToken,
-      );
-      return await Auth.auth.signInWithCredential(credential);
-    } catch (e) {
-      Future.microtask(
-        () => Dialogs.showSnackbar(context, 'No internet connection'),
-      );
+        final credential = GoogleAuthProvider.credential(
+          accessToken: googleAuth?.accessToken,
+          idToken: googleAuth?.idToken,
+        );
+        return await Auth.auth.signInWithCredential(credential);
+      } catch (e) {
+        log(e.toString());
+        Future.microtask(
+          () => Dialogs.showSnackbar(context, 'No internet connection'),
+        );
 
-      return null;
+        return null;
+      }
+    } else {
+      try {
+        final GoogleSignInAccount? googleUser = await GoogleSignIn().signIn();
+
+        final GoogleSignInAuthentication? googleAuth =
+            await googleUser?.authentication;
+
+        final credential = GoogleAuthProvider.credential(
+          accessToken: googleAuth?.accessToken,
+          idToken: googleAuth?.idToken,
+        );
+        return await Auth.auth.signInWithCredential(credential);
+      } catch (e) {
+        log(e.toString());
+        Future.microtask(
+          () => Dialogs.showSnackbar(context, 'No internet connection'),
+        );
+
+        return null;
+      }
     }
   }
 

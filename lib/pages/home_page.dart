@@ -1,3 +1,6 @@
+import 'dart:async';
+import 'dart:developer';
+
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:chat/api/apis.dart';
 import 'package:chat/controller/controller.dart';
@@ -6,6 +9,8 @@ import 'package:chat/pages/profile_page.dart';
 import 'package:chat/pages/search_page.dart';
 import 'package:chat/widgets/chat_user_card.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:connectivity_plus/connectivity_plus.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:get/get.dart';
@@ -18,28 +23,54 @@ class HomePage extends StatefulWidget {
   State<HomePage> createState() => _HomePageState();
 }
 
+late StreamSubscription<ConnectivityResult> subscription;
+
 class _HomePageState extends State<HomePage> {
   @override
   void initState() {
     super.initState();
-    SystemChannels.lifecycle.setMessageHandler((message) {
-      if (message.toString().contains('resume')) {
-        FireStore.updateOnlineStatus(true);
-      }
-      if (message.toString().contains('pause')) {
-        FireStore.updateOnlineStatus(false);
-      }
-      return Future.value(message);
-    });
+    subscription = Connectivity()
+        .onConnectivityChanged
+        .listen((ConnectivityResult result) {});
+    log(subscription.toString());
+    FirestoreMessaging.getFirebaseMessagingToken();
+    if (Auth.auth.currentUser != null) {
+      SystemChannels.lifecycle.setMessageHandler((message) {
+        if (message.toString().contains('resume')) {
+          FireStore.updateOnlineStatus(true);
+        }
+        if (message.toString().contains('pause')) {
+          FireStore.updateOnlineStatus(false);
+        }
+        return Future.value(message);
+      });
+    }
+
+    connection();
+  }
+
+  @override
+  dispose() {
+    super.dispose();
+    subscription.cancel();
   }
 
   @override
   Widget build(BuildContext context) {
     widget.controller.screenheight = MediaQuery.of(context).size.height.obs;
     widget.controller.screenwidth = MediaQuery.of(context).size.width.obs;
+
     return Scaffold(
       appBar: AppBar(
         title: const Text('Chat'),
+        leading: IconButton(
+            onPressed: () {
+              widget.controller.isDarkModeEnabled.value =
+                  !widget.controller.isDarkModeEnabled.value;
+            },
+            icon: Icon(widget.controller.isDarkModeEnabled.value
+                ? Icons.dark_mode
+                : Icons.dark_mode_outlined)),
         actions: [
           IconButton(
             onPressed: () {
@@ -73,6 +104,7 @@ class _HomePageState extends State<HomePage> {
                       ChatUser loggeduser =
                           ChatUser.fromJson(snapshot.data!.data()!);
                       final imageUrl = loggeduser.image.toString();
+
                       return InkWell(
                         borderRadius: BorderRadius.circular(
                           widget.controller.screenheight.value * 0.025,
@@ -88,13 +120,25 @@ class _HomePageState extends State<HomePage> {
                             ),
                           );
                         },
-                        child: CachedNetworkImage(
-                          imageUrl: imageUrl,
-                          filterQuality: FilterQuality.high,
-                          fit: BoxFit.fill,
-                          height: widget.controller.screenheight.value * 0.05,
-                          width: widget.controller.screenheight.value * 0.05,
-                        ),
+                        child: kIsWeb
+                            ? Image.network(
+                                imageUrl,
+                                filterQuality: FilterQuality.high,
+                                fit: BoxFit.fill,
+                                height:
+                                    widget.controller.screenheight.value * 0.05,
+                                width:
+                                    widget.controller.screenheight.value * 0.05,
+                              )
+                            : CachedNetworkImage(
+                                imageUrl: imageUrl,
+                                filterQuality: FilterQuality.high,
+                                fit: BoxFit.cover,
+                                height:
+                                    widget.controller.screenheight.value * 0.05,
+                                width:
+                                    widget.controller.screenheight.value * 0.05,
+                              ),
                       );
                     }
                   }),
@@ -114,33 +158,66 @@ class _HomePageState extends State<HomePage> {
           ),
         ),
       ),
-      body: StreamBuilder<QuerySnapshot<Map<String, dynamic>>>(
-        stream: FireStore.getUsers(),
-        builder: (context, snapshot) {
-          switch (snapshot.connectionState) {
-            case ConnectionState.waiting:
-              return const Center(child: CircularProgressIndicator());
-            case ConnectionState.none:
-            case ConnectionState.active:
-            case ConnectionState.done:
-              if (snapshot.hasData) {
-                final data = snapshot.data!.docs;
-                List<ChatUser> list =
-                    data.map((e) => ChatUser.fromJson(e.data())).toList();
+      body: Column(
+        children: [
+          FutureBuilder(
+              future: connection(),
+              builder: (context, snapshot) {
+                if (snapshot.hasError) {
+                  return const SizedBox.shrink();
+                }
+                if (snapshot.hasData && snapshot.data != null) {
+                  if (!snapshot.data!) {
+                    return const Text('waiting for network');
+                  }
+                }
+                return const SizedBox();
+              }),
+          Expanded(
+            child: StreamBuilder<QuerySnapshot<Map<String, dynamic>>>(
+              stream: FireStore.getUsers(),
+              builder: (context, snapshot) {
+                switch (snapshot.connectionState) {
+                  case ConnectionState.waiting:
+                    return const Center(child: CircularProgressIndicator());
+                  case ConnectionState.none:
+                  case ConnectionState.active:
+                  case ConnectionState.done:
+                    if (snapshot.hasData) {
+                      final data = snapshot.data!.docs;
+                      List<ChatUser> list =
+                          data.map((e) => ChatUser.fromJson(e.data())).toList();
 
-                return ListView.builder(
-                    itemCount: list.length,
-                    itemBuilder: (context, index) {
-                      return ChatUserCard(
-                          controller: widget.controller, user: list[index]);
-                    });
-              }
-              return const Center(
-                child: Text('No data'),
-              );
-          }
-        },
+                      return ListView.builder(
+                          itemCount: list.length,
+                          itemBuilder: (context, index) {
+                            return ChatUserCard(
+                                controller: widget.controller,
+                                user: list[index]);
+                          });
+                    }
+                    return const Center(
+                      child: Text('No data'),
+                    );
+                }
+              },
+            ),
+          ),
+        ],
       ),
     );
   }
+}
+
+Future<bool> connection() async {
+  final connectivityResult = await (Connectivity().checkConnectivity());
+  if (connectivityResult == ConnectivityResult.mobile ||
+      connectivityResult == ConnectivityResult.wifi ||
+      connectivityResult == ConnectivityResult.ethernet ||
+      connectivityResult == ConnectivityResult.vpn ||
+      connectivityResult == ConnectivityResult.bluetooth ||
+      connectivityResult == ConnectivityResult.other) {
+    return true;
+  }
+  return false;
 }

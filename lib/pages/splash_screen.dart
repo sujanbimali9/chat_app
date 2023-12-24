@@ -4,10 +4,10 @@ import 'package:chat/pages/auth/loginscreen.dart';
 import 'package:chat/pages/home_page.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:get/get.dart';
 
 class SplashScreen extends StatefulWidget {
-  const SplashScreen({super.key});
+  final UserProfileController controller;
+  const SplashScreen({super.key, required this.controller});
 
   @override
   State<SplashScreen> createState() => _SplashScreenState();
@@ -18,7 +18,8 @@ class _SplashScreenState extends State<SplashScreen> {
   @override
   void initState() {
     super.initState();
-    final UserProfileController controller = Get.put(UserProfileController());
+    SystemChrome.setEnabledSystemUIMode(SystemUiMode.edgeToEdge);
+
     Future.delayed(const Duration(milliseconds: 5), () {
       setState(() {
         _animated = true;
@@ -33,7 +34,7 @@ class _SplashScreenState extends State<SplashScreen> {
           context,
           MaterialPageRoute(
             builder: (context) => HomePage(
-              controller: controller,
+              controller: widget.controller,
             ),
           ),
         );
@@ -42,12 +43,12 @@ class _SplashScreenState extends State<SplashScreen> {
           context,
           MaterialPageRoute(
             builder: (context) => LoginPage(
-              controller: controller,
+              controller: widget.controller,
             ),
           ),
         );
       }
-      SystemChrome.setEnabledSystemUIMode(SystemUiMode.edgeToEdge);
+
       SystemChrome.setSystemUIOverlayStyle(
         const SystemUiOverlayStyle(
           statusBarIconBrightness: Brightness.dark,

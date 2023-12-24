@@ -5,8 +5,8 @@ import 'package:chat/controller/controller.dart';
 import 'package:chat/models/user.dart';
 import 'package:chat/pages/auth/loginscreen.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
-import 'package:get/get.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 import 'package:image_picker/image_picker.dart';
 
@@ -48,8 +48,8 @@ class UserProfilePage extends StatelessWidget {
               children: [
                 TextButton(
                   onPressed: () async {
-                    final XFile? photo =
-                        await picker.pickImage(source: ImageSource.camera);
+                    final XFile? photo = await picker.pickImage(
+                        source: ImageSource.camera, imageQuality: 100);
                     if (photo != null) {
                       FireStore.updateProfilePicture(File(photo.path));
                     }
@@ -69,8 +69,8 @@ class UserProfilePage extends StatelessWidget {
                 ),
                 TextButton(
                   onPressed: () async {
-                    final XFile? image =
-                        await picker.pickImage(source: ImageSource.gallery);
+                    final XFile? image = await picker.pickImage(
+                        source: ImageSource.gallery, imageQuality: 100);
                     if (image != null) {
                       FireStore.updateProfilePicture(File(image.path));
                     }
@@ -117,37 +117,42 @@ class UserProfilePage extends StatelessWidget {
               children: [
                 Padding(
                   padding: const EdgeInsets.only(top: 10.0),
-                  child: Obx(
-                    () => Stack(
-                      children: [
-                        ClipRRect(
-                          borderRadius: BorderRadius.circular(
-                              controller.screenheight.value * 0.1),
-                          child: CachedNetworkImage(
-                            imageUrl: user.image,
-                            height: controller.screenheight.value * 0.2,
-                            width: controller.screenheight.value * 0.2,
-                            fit: BoxFit.cover,
+                  child: Stack(
+                    children: [
+                      ClipRRect(
+                        borderRadius: BorderRadius.circular(
+                            controller.screenheight.value * 0.1),
+                        child: kIsWeb
+                            ? Image.network(
+                                user.image,
+                                height: controller.screenheight.value * 0.2,
+                                width: controller.screenheight.value * 0.2,
+                                fit: BoxFit.cover,
+                              )
+                            : CachedNetworkImage(
+                                imageUrl: user.image,
+                                height: controller.screenheight.value * 0.2,
+                                width: controller.screenheight.value * 0.2,
+                                fit: BoxFit.cover,
+                              ),
+                      ),
+                      Positioned(
+                        bottom: -4,
+                        right: -1,
+                        child: MaterialButton(
+                          color: Colors.white,
+                          elevation: 0,
+                          onPressed: () {
+                            showBottomSheet(context, controller);
+                          },
+                          shape: const CircleBorder(),
+                          child: const Icon(
+                            Icons.edit,
+                            size: 20,
                           ),
                         ),
-                        Positioned(
-                          bottom: -4,
-                          right: -1,
-                          child: MaterialButton(
-                            color: Colors.white,
-                            elevation: 0,
-                            onPressed: () {
-                              showBottomSheet(context, controller);
-                            },
-                            shape: const CircleBorder(),
-                            child: const Icon(
-                              Icons.edit,
-                              size: 20,
-                            ),
-                          ),
-                        )
-                      ],
-                    ),
+                      )
+                    ],
                   ),
                 ),
                 const SizedBox(
@@ -225,10 +230,9 @@ class UserProfilePage extends StatelessWidget {
           style: FilledButton.styleFrom(
               backgroundColor: Colors.redAccent.shade200.withOpacity(0.9)),
           onPressed: () async {
+            FireStore.updateOnlineStatus(false);
             await FirebaseAuth.instance.signOut();
             await GoogleSignIn().signOut().then((value) {
-              // Navigator.pop(context);
-
               Navigator.pushAndRemoveUntil(
                 context,
                 MaterialPageRoute(

@@ -17,10 +17,7 @@ import 'package:flutter/foundation.dart'
 class DefaultFirebaseOptions {
   static FirebaseOptions get currentPlatform {
     if (kIsWeb) {
-      throw UnsupportedError(
-        'DefaultFirebaseOptions have not been configured for web - '
-        'you can reconfigure this by running the FlutterFire CLI again.',
-      );
+      return web;
     }
     switch (defaultTargetPlatform) {
       case TargetPlatform.android:
@@ -49,24 +46,32 @@ class DefaultFirebaseOptions {
     }
   }
 
+  static const FirebaseOptions web = FirebaseOptions(
+    apiKey: 'AIzaSyCBAnLyjxUm129cHRxxMhzVE3SKk9ygBkw',
+    appId: '1:1065966968008:web:0e350b2fae63517e83d9fd',
+    messagingSenderId: '1065966968008',
+    projectId: 'chatapp-54837',
+    authDomain: 'chatapp-54837.firebaseapp.com',
+    storageBucket: 'chatapp-54837.appspot.com',
+    measurementId: 'G-R85CSV8GRS',
+  );
+
   static const FirebaseOptions android = FirebaseOptions(
-    apiKey: 'AIzaSyBT6fWPH1QmdtAtDj1RRz9rDYISChkLH54',
-    appId: '1:158642611374:android:12c628d5851b5bc82eb93f',
-    messagingSenderId: '158642611374',
-    projectId: 'chat-f8cfd',
-    storageBucket: 'chat-f8cfd.appspot.com',
+    apiKey: 'AIzaSyBw3LElV_7sFK1ZsIpHvwDvebLWUin8n_8',
+    appId: '1:1065966968008:android:5bad27f169dfc20a83d9fd',
+    messagingSenderId: '1065966968008',
+    projectId: 'chatapp-54837',
+    storageBucket: 'chatapp-54837.appspot.com',
   );
 
   static const FirebaseOptions ios = FirebaseOptions(
-    apiKey: 'AIzaSyBcRJkgLZRHvhzjLTw7mNHDa_TO6xiYVYw',
-    appId: '1:158642611374:ios:cc04243e04e2d8fe2eb93f',
-    messagingSenderId: '158642611374',
-    projectId: 'chat-f8cfd',
-    storageBucket: 'chat-f8cfd.appspot.com',
-    androidClientId:
-        '158642611374-hknttc54fvc2p23kh6o2hsp5ii6timkq.apps.googleusercontent.com',
-    iosClientId:
-        '158642611374-do72kgh29upr0l0c6lb5kihh5i1mru71.apps.googleusercontent.com',
+    apiKey: 'AIzaSyDOqw5T-dwdYmI4fjIj-_c7CqP1aRRuk0k',
+    appId: '1:1065966968008:ios:2bc5895f978502b983d9fd',
+    messagingSenderId: '1065966968008',
+    projectId: 'chatapp-54837',
+    storageBucket: 'chatapp-54837.appspot.com',
+    androidClientId: '1065966968008-a4ug3plor0mjgmsvo9jdmqp8lqdij50o.apps.googleusercontent.com',
+    iosClientId: '1065966968008-h07kg8db6spmpb7h2qn73n3rdfe06opk.apps.googleusercontent.com',
     iosBundleId: 'com.example.chat',
   );
 }

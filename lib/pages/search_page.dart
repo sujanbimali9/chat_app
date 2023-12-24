@@ -1,6 +1,7 @@
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:chat/api/apis.dart';
 import 'package:chat/controller/controller.dart';
+import 'package:chat/helper/current_datetime.dart';
 import 'package:chat/models/user.dart';
 import 'package:chat/pages/chat_screen.dart';
 import 'package:flutter/material.dart';
@@ -33,26 +34,29 @@ class SearchPage extends StatelessWidget {
             },
           ),
           actions: [
-            Obx(() {
-              if (controller.searchData != ''.obs) {
-                return IconButton(
-                  onPressed: () {
-                    controller.updateSearchData('');
-                    searchController.clear();
-                  },
-                  icon: const Icon(Icons.close_rounded),
-                );
-              } else {
-                return const SizedBox();
-              }
-            })
+            Obx(
+              () {
+                if (controller.searchData != ''.obs) {
+                  return IconButton(
+                    onPressed: () {
+                      controller.updateSearchData('');
+                      searchController.clear();
+                    },
+                    icon: const Icon(Icons.close_rounded),
+                  );
+                } else {
+                  return const SizedBox();
+                }
+              },
+            )
           ],
         ),
-        body: Obx(() {
-          if (controller.searchData == ''.obs) {
-            return const SizedBox();
-          } else {
-            return StreamBuilder(
+        body: Obx(
+          () {
+            if (controller.searchData == ''.obs) {
+              return const SizedBox();
+            } else {
+              return StreamBuilder(
                 stream: FireStore.getUsers(),
                 builder: (context, snapshot) {
                   if (!snapshot.hasData) {
@@ -72,7 +76,6 @@ class SearchPage extends StatelessWidget {
                       choices: user.map((e) => e.name).toList(),
                       limit: data.length,
                       cutoff: 50);
-
                   return ListView.builder(
                     itemCount: searchResult.length,
                     itemBuilder: (context, index) {
@@ -99,7 +102,10 @@ class SearchPage extends StatelessWidget {
                           ),
                           subtitle: Text(user[index].about),
                           trailing: Text(
-                            user[index].lastActive,
+                            CurrentDateTime.getTime(
+                              context: context,
+                              time: user[index].lastActive,
+                            ),
                             style: const TextStyle(color: Colors.black54),
                           ),
                           leading: ClipRRect(
@@ -117,9 +123,11 @@ class SearchPage extends StatelessWidget {
                       return const SizedBox();
                     },
                   );
-                });
-          }
-        }),
+                },
+              );
+            }
+          },
+        ),
       ),
     );
   }

@@ -1,9 +1,11 @@
 import 'dart:async';
+import 'dart:developer';
 import 'dart:io';
 import 'package:chat/models/messages.dart';
 import 'package:chat/models/user.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:firebase_storage/firebase_storage.dart';
 
 class Auth {
@@ -110,6 +112,8 @@ class FireStore {
         msg: msg,
         toId: toid,
         read: false,
+        sentTime: time,
+        readTime: '',
         type: type.toString(),
         fromId: Auth.user.uid,
         time: time);
@@ -123,11 +127,15 @@ class FireStore {
 
   static Future<void> updateRead(
       {required String userid, required String time}) async {
+    final String readTime = DateTime.now().microsecondsSinceEpoch.toString();
     await firestore
         .collection('chat/${getConversionId(userid)}/messages/')
         .doc(time)
         .update(
-      {'read': true},
+      {
+        'read': true,
+        'read_time': readTime,
+      },
     );
   }
 
@@ -141,13 +149,16 @@ class FireStore {
         .snapshots();
   }
 
+  static String pushToken = 'sujan';
+
   // update online status
   static Future<void> updateOnlineStatus(
     bool isOnline,
   ) {
     return firestore.collection('users').doc(Auth.user.uid).update({
       'isOnline': isOnline,
-      'last_active': DateTime.now().microsecondsSinceEpoch.toString()
+      'last_active': DateTime.now().microsecondsSinceEpoch.toString(),
+      'push_token': pushToken
     });
   }
 
@@ -169,15 +180,63 @@ class FireStore {
     );
   }
 
-  Stream<QuerySnapshot<Map<String, dynamic>>> getUserInfo(ChatUser user) {
-    return firestore
-        .collection('users')
-        .where('id', isEqualTo: user.id)
-        .snapshots();
+  static Stream<DocumentSnapshot<Map<String, dynamic>>> getUserInfo(
+      ChatUser user) {
+    return firestore.collection('users').doc(user.id).snapshots();
+  }
+
+  static Future<void> editMessage(
+      {required String userid,
+      required String time,
+      required String msg}) async {
+    await firestore
+        .collection('chat/${getConversionId(userid)}/messages/')
+        .doc(time)
+        .update(
+      {
+        'msg': msg,
+      },
+    );
+  }
+
+  static Future<void> deleteMessage(Chats chat) async {
+    await firestore
+        .collection('chat/${getConversionId(
+          chat.toId,
+        )}/messages/')
+        .doc(chat.time)
+        .delete();
+    if (chat.type == 'image') {
+      await FireStorage.storage.refFromURL(chat.msg).delete();
+    }
   }
 }
 
 class FireStorage {
   // instance of firestorage
   static FirebaseStorage storage = FirebaseStorage.instance;
+}
+
+class FirestoreMessaging {
+  static FirebaseMessaging firebaseMessaging = FirebaseMessaging.instance;
+
+  static Future<void> getFirebaseMessagingToken() async {
+    try {
+      await firebaseMessaging.requestPermission();
+    } catch (error) {
+      log(error.toString());
+    }
+    try {
+      await firebaseMessaging.getToken().then((value) {
+        if (value != null) {
+          log(value);
+          FireStore.pushToken = value;
+        }
+      });
+    } catch (error) {
+      log(
+        error.toString(),
+      );
+    }
+  }
 }
